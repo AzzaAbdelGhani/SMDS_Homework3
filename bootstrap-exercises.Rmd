@@ -131,6 +131,27 @@ Compute bootstrap-based confidence intervals for the $score$ dataset using the $
 *solution :*
 
 ```{r basic 3, echo=TRUE}
+library(boot)
+
+psi_fun_boot = function(x, indices){
+  data <- x[indices,]
+  eig <- eigen(cor(data))$values
+  return(max(eig) / sum(eig))
+}
+
+psi_fun_boot_var = function(x, indices){
+  data <- x[indices,]
+  b <- boot(score, psi_fun_boot, 100)
+  eig <- eigen(cor(data))$values
+  return(c(max(eig) / sum(eig), var(b$t)))
+}
+
+score <- read.table("student_score.txt", header = TRUE)
+#boot_results <- boot(score, psi_fun_boot, 1000)
+#boot.ci(boot.out = boot_results)
+
+boot_var_results <- boot(score, psi_fun_boot_var, 1000)
+boot.ci(boot.out = boot_var_results)
 
 ```
 
