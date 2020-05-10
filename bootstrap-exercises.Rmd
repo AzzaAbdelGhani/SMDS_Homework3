@@ -116,8 +116,6 @@ hist.scott(s_vect, main = "Studentized method")
 abline(v = psi_obs, col = 2)
 abline(v = stud_ci, col = "blue")
 
-
-
 ```
 
 Comparing the Studentized bootstrap confidence interval and the Wald-type interval, and taking the point estimate as a reference, as given in the lecture the percentile confidence interval is wider on the left side and shorter on the right side. However, the studentized bootstrap confidence interval is wider on both sides (left and right).
@@ -139,6 +137,7 @@ psi_fun_boot = function(x, indices){
   return(max(eig) / sum(eig))
 }
 
+#bootstrap variances needed for studentized intervals
 psi_fun_boot_var = function(x, indices){
   data <- x[indices,]
   b <- boot(score, psi_fun_boot, 100)
@@ -147,11 +146,11 @@ psi_fun_boot_var = function(x, indices){
 }
 
 score <- read.table("student_score.txt", header = TRUE)
-#boot_results <- boot(score, psi_fun_boot, 1000)
-#boot.ci(boot.out = boot_results)
+boot_results <- boot(score, psi_fun_boot, 1000)
+boot.ci(boot.out = boot_results, , type = c("perc","basic"))
 
 boot_var_results <- boot(score, psi_fun_boot_var, 1000)
-boot.ci(boot.out = boot_var_results)
+boot.ci(boot.out = boot_var_results, type = "stud")
 
 ```
 
