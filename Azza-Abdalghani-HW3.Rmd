@@ -154,3 +154,37 @@ boot.ci(boot.out = boot_var_results, type = "stud")
 
 ```
 
+
+
+### Lab : Exercise 10
+
+Let y=(1,0,0,1,0,0,0,0,0,1,0,0,1,0) collect the results of tossing n=14 times an unfair coin, where 1 denotes heads and 0 tails, and p=Prob(yi=1). 
+
+
+1. Looking at the Stan code for the other models, write a short Stan Beta-Binomial model, where p has a Beta(a,b) prior with a=3, b=3.
+
+```{r basic 10, echo=TRUE }
+library(rstan)
+y <- c(1,0,0,1,0,0,0,0,0,1,0,0,1,0)
+n <- length(y)
+
+
+alpha <- 3 
+beta <- 3 
+
+
+data <- list(N=n , y=sum(y), alpha = 3, beta = 3)
+fit <- stan(file = "Beta-Binomial.stan", data = data, chains = 4, iter = 2000)
+
+sim <- extract(fit)
+```
+
+
+
+
+
+
+
+
+
+
