@@ -163,6 +163,28 @@ Let y=(1,0,0,1,0,0,0,0,0,1,0,0,1,0) collect the results of tossing n=14 times an
 
 1. Looking at the Stan code for the other models, write a short Stan Beta-Binomial model, where p has a Beta(a,b) prior with a=3, b=3.
 
+
+Beta-Binomial.stan file is : 
+```
+data{
+  int N;
+  int y;
+  real<lower=0> alpha;
+  real<lower=0> beta;
+}
+parameters{
+  real p;
+}
+model{
+  target+=binomial_lpmf(y|N, p);
+  target+=beta_lpdf(p|alpha,beta);
+}
+
+```
+
+2.extract the posterior distribution with the function  extract().
+
+
 ```{r basic 10, echo=TRUE }
 library(rstan)
 y <- c(1,0,0,1,0,0,0,0,0,1,0,0,1,0)
@@ -178,9 +200,6 @@ fit <- stan(file = "Beta-Binomial.stan", data = data, chains = 4, iter = 2000)
 
 sim <- extract(fit)
 ```
-
-
-
 
 
 
