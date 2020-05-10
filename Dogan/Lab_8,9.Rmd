@@ -1,6 +1,6 @@
 ---
-title: "Homework 1 - Group G"
-author: "Matilde Castelli - Dogan Demirbilek - Eros Fabrici"
+title: "Homework 3 - Group B"
+author: "Abdalghani, Zambon, Morichetti, Demirbilek"
 #output: html_notebook
 output:
   html_document:
@@ -278,7 +278,7 @@ Since we know that $H = 4$, $T=10$ and $\alpha=3$, $\beta=3$, we have $\text{Bet
 ```{r echo=TRUE,  message=FALSE, warning=FALSE}
 curve(dbeta(x,alpha,beta), xlim=c(-0.25,1.25), ylim= c(0,4), lwd =2,ylab = "Density", xlab = expression(theta))
 curve(dbeta(x,alpha+4,beta+10), lty =2, col="red", add=TRUE,lwd=2)
-lines(density(sim$theta),lty=2, col="blue", add=TRUE)
+lines(density(sim$theta, adj=2),lty=2, col="blue", add=TRUE)
 legend(0.8,3.5,c("Prior", "True Posterior","Stan Posterior"), c("black", "red","blue"))
 
 ```
