@@ -38,7 +38,7 @@ local({
 ### Exercise 1
 
 
-Compute the bootstrap-based confidence interval for the $score$ dataset using the studentized method.
+**Compute the bootstrap-based confidence interval for the $score$ dataset using the studentized method.**
 
 
 *solution :*
@@ -72,27 +72,25 @@ for(i in 1:B)
   SE_jack[i] <- sqrt(((n - 1)/n) * sum((s_tmp - mean(s_tmp))^2))
   
 }
-```
 
-```{r basic 2, echo=TRUE}
 
 SE_boot <- sd(s_vect)
 wald_ci <- psi_obs + c(-1, 1) * 1.96 * SE_boot 
 print("Wald-type confidence interval :")
 wald_ci
 
-hist.scott(s_vect, main = "Wald-type CI")
-abline(v = psi_obs, col = 2)
-abline(v = wald_ci, col = "blue")
+#hist.scott(s_vect, main = "Wald-type CI")
+#abline(v = psi_obs, col = 2)
+#abline(v = wald_ci, col = "blue")
 
 
 #percentile method : 
 perc_ci <- quantile(s_vect, prob=c(0.025, 0.975))
 attr(perc_ci, "names") <- NULL
 perc_ci
-hist.scott(s_vect, main = "Percentile method")
-abline(v = psi_obs, col = 2)
-abline(v = perc_ci, col = "blue")
+#hist.scott(s_vect, main = "Percentile method")
+#abline(v = psi_obs, col = 2)
+#abline(v = perc_ci, col = "blue")
 
 
 #studentized Method
@@ -104,8 +102,11 @@ attr(stud_ci, "names") <- NULL
 print("Studentized bootstrap confidence interval :")
 stud_ci
 hist.scott(s_vect, main = "Studentized method")
-abline(v = psi_obs, col = 2)
-abline(v = stud_ci, col = "blue")
+abline(v = psi_obs , col = "red")
+abline(v = wald_ci , col = "blue")
+abline(v = perc_ci , col = "green")
+abline(v = stud_ci , col = "orange")
+legend("topleft", legend = c("psi_obs", "wald_ci", "perc_ci", "stud_ci"), col = c("red", "blue", "green", "orange"),lwd=c(2,2,2,2))
 
 ```
 
@@ -115,7 +116,7 @@ Comparing the Studentized bootstrap confidence interval and the Wald-type interv
 
 ### Exercise 2
 
-Compute bootstrap-based confidence intervals for the $score$ dataset using the $boot$ package.
+**Compute bootstrap-based confidence intervals for the $score$ dataset using the $boot$ package.**
 
 
 *solution :*
@@ -151,7 +152,7 @@ boot.ci(boot.out = boot_var_results, type = "stud")
 ## Laboratory {.tabset} 
 ### Exercise 1
 
-Use nlm to compute the variance for the estimator w^=(log(γ^),log(β^)) and optimHess for the variance of θ^=(γ^,β^).
+**Use nlm to compute the variance for the estimator w^=(log(γ^),log(β^)) and optimHess for the variance of θ^=(γ^,β^).**
 
 
 ```{r Ex 1.0, message = FALSE, warning = FALSE}
@@ -299,11 +300,11 @@ opt_theta
 
 ### Exercise 2
 
-The $Wald confidence$ interval with level  $1−\alpha$ is defined as:
+**The $Wald confidence$ interval with level  $1−\alpha$ is defined as:**
 
-$$\hat{\gamma} \pm z_{1 - \alpha/2} j_P (\hat{\gamma})^{−1/2}.$$
+$$\hat{\gamma} \pm z_{1 - \alpha/2} j_P (\hat{\gamma})^{−1/2}.$$ 
 
-Compute the Wald confidence interval of level 0.95 and plot the results.
+**Compute the Wald confidence interval of level 0.95 and plot the results.** 
 
 *Solution :*
 
@@ -455,7 +456,7 @@ text(7, -7.5, "95% Wald CI", col = 2)
 
 ### Exercise 3
 
-Repeat the steps of the previous exercise —write the profile log-likelihood, plot it and find the deviance confidence intervals— considering this time $\gamma$ as a *nuisance parameter* and $\beta$ as the *parameter of interest*.
+**Repeat the steps of the previous exercise —write the profile log-likelihood, plot it and find the deviance confidence intervals— considering this time $\gamma$ as a *nuisance parameter* and $\beta$ as the *parameter of interest*.**
 
 
 *Solution :*
@@ -544,7 +545,7 @@ text(7, -7.5, "95% Deviance CI", col = 2)
 
 ### Exercise 5 
 
-In $sim$ in the code above, you find the MCMC output which allows to approximate the posterior distribution of our parameter of interest with $S$ draws of $\theta$. Please, produce an histogram for these random draws $\theta(1),…,\theta(S)$, compute the empirical quantiles, and overlap the true posterior distribution.
+**In $sim$ in the code above, you find the MCMC output which allows to approximate the posterior distribution of our parameter of interest with $S$ draws of $\theta$. Please, produce an histogram for these random draws $\theta(1),…,\theta(S)$, compute the empirical quantiles, and overlap the true posterior distribution.**
 
 
 *Solution :*
@@ -610,19 +611,19 @@ curve(dnorm(x, mu_star, sd_star),
 
 ### Exercise 6
 
-Launch the following line of $R$ code:
+**Launch the following line of $R$ code:**
 ```{r basic= 10, echo=TRUE}
 posterior <- as.array(fit)
 ```
 
-Use now the $bayesplot$ package. Read the help and produce for this example, using the object posterior, the following plots:
+**Use now the $bayesplot$ package. Read the help and produce for this example, using the object posterior, the following plots:**
 
 * posterior intervals.
 * posterior areas.
 * marginal posterior distributions for the parameters.
 
 
-Quickly comment.
+**Quickly comment.**
 
 *Solution :*
 ```{r basic =11 , echo=TRUE}
@@ -689,7 +690,7 @@ mcmc_combo(
 
 ### Exercise 7
 
-Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $yi∼Poisson(\lambda)$. Now, you have to choose the prior $π(λ)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:
+**Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $yi∼Poisson(\lambda)$. Now, you have to choose the prior $π(λ)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:**
 
 1. $π(\lambda)=Beta(4,2);$
 
@@ -697,7 +698,7 @@ Suppose you receive $n=15$ phone calls in a day, and you want to build a model t
 
 3. $π(\lambda)=Gamma(4,2);$
 
-Now, compute your posterior as $\pi(\lambda|y)∝L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analitically.
+**Now, compute your posterior as $\pi(\lambda|y)∝L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analitically.**
 
 *solution :*
 
@@ -771,7 +772,7 @@ legend(8.5, 0.7, c("Prior", "Likelihood", "Posterior"),
 
 **Which prior are you now assuming for your parameter**$\sigma$**? Reproduce the same plots as above and briefly comment. **
 
-**Solution:**
+*Solution:*
 
 We are assuming uniform distribution for parameter $\sigma$ such that $\sigma \sim \text{Unif}(0.1,10)$.
 
@@ -817,7 +818,7 @@ From the traceplot, we can easily say that chains are converged meaning they run
 
 **Reproduce the first plot above for the soccer goals, but this time by replacing Prior 1 with a **$\text{Gamma}(2,4).$**Then, compute the final Bayes factor matrix `(BF_matrix)` with this new prior and the other ones unchanged, and comment. Is still Prior 2 favorable over all the others? **
 
-**Solution:**
+*Solution:*
 
 Likelihood and prior distributions are given in labratory file. Prior one changed from $\text{Gamma}(4.57,1.43)$ to $\text{Gamma}(2,4)$ (average $\alpha/\beta = 0.5$) and first plot reproduced below. 
 
