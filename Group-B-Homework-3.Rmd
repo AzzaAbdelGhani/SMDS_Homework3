@@ -642,7 +642,7 @@ $\propto \prod_{i = 1}^{n}(\frac{\lambda^{x_i} \cdot e^{-\lambda}}{x_i !}) \cdot
 $\propto \prod_{i = 1}^{n}(\lambda^{x_i}) \cdot e^{-n \cdot \lambda} \cdot \lambda^{\alpha - 1} \cdot e^{\beta \cdot \lambda} = \lambda^{(s + \alpha) - 1} \cdot e^{-(n + \beta) \cdot \lambda}$
 
 Where we have not compute the normalization constant and we ignored constants that do not depend on $\lambda$.
-So, the posterior distribution belongs to a gamma distribution $Gamma(s + \alpha, n \cdot \beta)$ in which $s = x_1 + x_2 + \cdots + x_n$; in the our specific case the posterior distribution belongs to a $Gamma(s + 4, 15 \cdot 2)$.
+So, the posterior distribution belongs to a gamma distribution $Gamma(s + \alpha, n + \beta)$ in which $s = x_1 + x_2 + \cdots + x_n$; in the our specific case the posterior distribution belongs to a $Gamma(s + 4, 15 + 2)$.
 
 ```{r basic= 16 , echo=TRUE}
 #input values
