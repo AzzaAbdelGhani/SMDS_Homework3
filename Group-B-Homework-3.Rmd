@@ -261,7 +261,7 @@ var_theta
 
 ### Exercise 2
 
-**The $Wald confidence$ interval with level  $1−\alpha$ is defined as:**
+**The $Wald \space confidence$ interval with level  $1−\alpha$ is defined as:**
 
 $$\hat{\gamma} \pm z_{1 - \alpha/2} j_P (\hat{\gamma})^{−1/2}.$$
 
