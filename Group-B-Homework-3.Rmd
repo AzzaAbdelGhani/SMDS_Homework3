@@ -165,11 +165,13 @@ log_lik_weibull_rep <- function(data, param) log_lik_weibull(data, theta(param))
 weib.y.nlm <- nlm(log_lik_weibull_rep,c(0,0),hessian=T,data=y)
 weib.y.nlm
 
-cat("Variance of w:\n",diag(solve(weib.y.nlm$hessian)),"\n")
+print("Variance of w:")
+diag(solve(weib.y.nlm$hessian))
 
 # Variance of the thetahat estimator using optimHess
 opthess_output <- optimHess(theta(weib.y.nlm$estimate), log_lik_weibull, data=y)
-cat("Variance of θ:\n",diag(solve(opthess_output)))
+print("Variance of θ:")
+diag(solve(opthess_output))
 
 ```
 
@@ -228,6 +230,7 @@ plot(function(x) -log_lik_weibull_profile_v(data=y, x) + weib.y.mle$value,
 abline(h=-qchisq(conf.level,1)/2,lty='dashed',col="red")
 
 
+
 segments(wald_ci[1],-log_lik_weibull_profile_v(y, wald_ci[1]) - weib.y.mle$value, 
          wald_ci[1], -log_lik_weibull_profile_v(y, wald_ci[1]) + weib.y.mle$value, 
          col="red", lty = 2)
@@ -247,6 +250,7 @@ text(7, -6.5, "95% Wald CI", col = "red")
 
 ```
 
+Below we plotted them together to see the difference between the two confidence intervals.
 
 ### Exercise 3
 
@@ -484,42 +488,6 @@ $\propto \prod_{i = 1}^{n}(\lambda^{x_i}) \cdot e^{-n \cdot \lambda} \cdot \lamb
 
 Where we have not compute the normalization constant and we ignored constants that do not depend on $\lambda$.
 So, the posterior distribution belongs to a gamma distribution $Gamma(s + \alpha, n + \beta)$ in which $s = x_1 + x_2 + \cdots + x_n$; in the our specific case the posterior distribution belongs to a $Gamma(s + 4, 15 + 2)$.
-
-```{r basic= 16 , echo=TRUE}
-#input values
-
-
-#true mean
-theta_sample <- 2
-#likelihood variance
-sigma2 <- 2
-#sample size
-n <- 15
-#prior mean
-mu <- 7
-#prior variance
-tau2 <- 2
-
-#generate some data
-set.seed(123)
-y <- rnorm(n,theta_sample, sqrt(sigma2))
-
-#posterior mean
-mu_star <- ((1/tau2)*mu+(n/sigma2)*mean(y))/( (1/tau2)+(n/sigma2))
-#posterior standard deviation
-sd_star <- sqrt(1/( (1/tau2)+(n/sigma2)))
-
-
-curve(dnorm(x, theta_sample, sqrt(sigma2/n)),xlim=c(-4,15), lty=2, lwd=1, col="black", ylim=c(0,1.4), 
-      ylab="density", xlab=expression(theta))
-
-curve(dnorm(x, mu, sqrt(tau2) ), xlim=c(-4,15), col="red", lty=1,lwd=2,  add =T)
-curve(dnorm(x, mu_star, sd_star), 
-      xlab=expression(theta), ylab="", col="blue", lwd=2, add=T)  
-legend(8.5, 0.7, c("Prior", "Likelihood", "Posterior"), 
-       c("red", "black", "blue", "grey" ), lty=c(1,2,1),lwd=c(1,1,2), cex=1)
-
-```
 
 
 ### Exercise 8
