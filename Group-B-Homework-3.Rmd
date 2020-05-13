@@ -236,52 +236,27 @@ jhat
 
 **Solution:**
 
-```{r Ex 1.1, message = FALSE, warning = FALSE}
-#thetahat <- c(gammahat, betahat)
+To compute the variance of an estimator we need to find first the hessian (that is the observed information matrix). Then we use solve to compute inverse of that matrix, that is the covariance matrix. 
 
+```{r Ex 1.1, message = FALSE, warning = FALSE}
 
 # Variance of the omegahat estimator
-# reparametrization of the parameter in the log likelihood
-log_lik_weibull_omega <- function(data, param) log_lik_weibull(data, omega(param))
+# Since the parameters are already reparametrized in log scale
+# we can use function log_lik_weibull_rep to find the omega estimator
 
-omega_nlm <- nlm(log_lik_weibull_omega, c(1000, 4e67), hessian = T, data = y)
+omega_nlm <- nlm(log_lik_weibull_rep, c(0, 0), hessian = T, data = y)
 omega_nlm
-omega(omega_nlm$estimate)
+theta(omega_nlm$estimate)
+diag(solve(omega_nlm$hessian))
 
-#var_omega <- diag(solve(omega_nlm$hessian))
-#var_omega
-
-
-# Variance of the thetahat estimator 
+# Variance of the thetahat estimatorusing optimHess
 opt_theta <- optim(c(1, 5), log_lik_weibull, hessian = T, data = y)
 opt_theta
 
-#var_theta <- diag(solve(opt_theta$hessian))
-#var_theta
-
-
-#-------------------------------------------------
-#variance <- function(data, param, parametrization) {
-#  if(parametrization == "omega") {
-#    a <- nlm(log_lik_weibull_rep_omega, param, hessian = T, data = y)
-#    weib_var <- a$estimate[1]*factorial(1+1/a$estimate[2])
-#    return(2*weib_var^2/length(data))
-#  }
-#  else if(parametrization == "theta") {
-#    a <- optim(param, fn = log_lik_weibull_rep, NULL, method = "CG", data = y)
-#    weib_var <- a$par[1]*(1+1/a$par[2])
-#    return(2*weib_var^2/length(data))
-#  }
-#}
-
-#min_var_omega <- nlm(variance, c(21, 123), hessian = T, data = y, parametrization = "omega")
-#min_var_omega$minimum
-
-#min_var_theta <- optim(c(2, 10), variance, NULL, method = "BFGS", data = y, parametrization = "theta")
-#min_var_theta$value
-
-#optimHess(b$par, log_lik_weibull_rep_omega, data = y)
+var_theta <- diag(solve(opt_theta$hessian))
+var_theta
 ```
+
 
 
 ### Exercise 2
