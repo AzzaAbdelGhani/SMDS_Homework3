@@ -37,13 +37,9 @@ local({
 
 ### Exercise 1
 
+**Compute the bootstrap-based confidence interval for the $score$ dataset using the studentized method.**
 
-Compute the bootstrap-based confidence interval for the $score$ dataset using the studentized method.
-
-
-*solution :*
-
-
+**Solution:**
 
 ```{r basic 1, echo=TRUE}
 #loading data 
@@ -112,13 +108,11 @@ abline(v = stud_ci, col = "blue")
 Comparing the Studentized bootstrap confidence interval and the Wald-type interval, and taking the point estimate as a reference, as given in the lecture the percentile confidence interval is wider on the left side and shorter on the right side. However, the studentized bootstrap confidence interval is wider on both sides (left and right).
 
 
-
 ### Exercise 2
 
-Compute bootstrap-based confidence intervals for the $score$ dataset using the $boot$ package.
+**Compute bootstrap-based confidence intervals for the $score$ dataset using the $boot$ package.**
 
-
-*solution :*
+**Solution:**
 
 ```{r basic 3, echo=TRUE}
 library(boot)
@@ -146,36 +140,395 @@ boot.ci(boot.out = boot_var_results, type = "stud")
 
 ```
 
-
-
 ## Laboratory {.tabset} 
+
 ### Exercise 1
 
-*Solution :*
+**Use nlm to compute the variance for the estimator w^=(log(γ^),log(β^)) and optimHess for the variance of θ^=(γ^,β^).**
+
+```{r Ex 1.0, message = FALSE, warning = FALSE}
+y <- c(155.9, 200.2, 143.8, 150.1,152.1, 142.2, 147, 146, 146,
+       170.3, 148, 140, 118, 144, 97)
+n <- length(y)
+
+# log-likelihood function
+log_lik_weibull <- function(data, param){
+  -sum(dweibull(data, shape = param[1], scale = param[2], log = TRUE))
+}
+
+ #define parameters grid
+ gamma <- seq(0.1, 15, length=100)
+ beta <- seq(100,200, length=100)
+ 
+ parvalues <- expand.grid(gamma,beta)
+ llikvalues <- apply(parvalues, 1, log_lik_weibull, data=y)
+ llikvalues <- matrix(-llikvalues, nrow = length(gamma), ncol=length(beta),
+                      byrow=F)
+ conf.levels <- c(0, 0.5, 0.75, 0.9, 0.95, 0.99)
+ 
+ #contour plot
+ contour(gamma, beta, llikvalues - max(llikvalues),
+         levels = -qchisq(conf.levels, 2)/2,
+         xlab = expression(gamma),
+         labels = as.character(conf.levels),
+         ylab = expression(beta))
+ title('Weibull relative log likelihood')
+ 
+  #image
+ image(gamma, beta, llikvalues - max(llikvalues), zlim = c(-6,0),
+       col = terrain.colors(20),
+       xlab = expression(gamma),
+       ylab = expression(beta))
+ title('Weibull relative log likelihood')
 
 
+gammahat <- uniroot(function(x) n/x+sum(log(y))-n*sum(y^x*log(y))/sum(y^x), c(1e-5,15))$root
+betahat <- mean(y^gammahat)^(1/gammahat)
+weib.y.mle <- c(gammahat,betahat)
+
+#observed information matrix
+jhat <- matrix(NA, nrow=2, ncol=2)
+jhat[1,1] <- n/gammahat^2 + sum((y/betahat)^gammahat*(log(y/betahat))^2)
+jhat[1,2] <- jhat[2,1] <- n/betahat - sum(y^gammahat/betahat^(gammahat+1)*(gammahat*log(y/betahat) + 1))
+jhat[2,2] <- -n*gammahat/betahat^2 + gammahat*(gammahat + 1)/
+betahat^(gammahat + 2)*sum(y^gammahat)
+solve(jhat)
+
+#se of the mle
+mle.se<-sqrt(diag(solve(jhat)))
+mle.se
+
+#first element is the MLE for the shape gamma, second element the MLE for the scale beta
+weib.y.mle
+
+weib.y.nlm <- nlm(log_lik_weibull, c(0,0), hessian = T, data = y)
+weib.y.nlm
+
+omega <- function(theta) log(theta)
+theta <- function(omega) exp(omega)
+
+log_lik_weibull_rep <- function(data, param) log_lik_weibull(data, theta(param))
+weib.y.nlm <- nlm(log_lik_weibull_rep,c(0,0),hessian=T,data=y)
+weib.y.nlm
+
+theta(weib.y.nlm$estimate)
+
+weib.y.mle
+```
+
+The **optim()** function provides a lot of numerical methods, such us Nelder-Mead, quasi-Newton, conjugate-gradient methods and simulated annealings. As a drawback, the user has to set up very carefully the initial parameters and the adopted method, since the final solution may be quite sensitive to these choices. To compute the observed information, the function **optimHess()** computes numerical derivatives of generic functions.
+
+```{r Ex 1.0.1, message = FALSE, warning = FALSE}
+# gamma = 1, beta = 20 as initial choices with quasi-Newton method
+weib.y.optim.qn <- optim(c(1,20), log_lik_weibull_rep, NULL, method =  "BFGS", data=y)
+weib.y.optim.qn
+theta(weib.y.optim.qn$par)
+
+# gamma = 1, beta = 6 as initial choices with conjugate-gradient method.
+weib.y.optim.cg <- optim(c(1,6), log_lik_weibull_rep, NULL, method =  "CG", data=y)$par
+theta(weib.y.optim.cg)
+
+optimHess(theta(weib.y.nlm$estimate),log_lik_weibull,data=y)
+
+jhat
+```
+
+
+**Solution:**
+
+```{r Ex 1.1, message = FALSE, warning = FALSE}
+#thetahat <- c(gammahat, betahat)
+
+
+# Variance of the omegahat estimator
+# reparametrization of the parameter in the log likelihood
+log_lik_weibull_omega <- function(data, param) log_lik_weibull(data, omega(param))
+
+omega_nlm <- nlm(log_lik_weibull_omega, c(1000, 4e67), hessian = T, data = y)
+omega_nlm
+omega(omega_nlm$estimate)
+
+#var_omega <- diag(solve(omega_nlm$hessian))
+#var_omega
+
+
+# Variance of the thetahat estimator 
+opt_theta <- optim(c(1, 5), log_lik_weibull, hessian = T, data = y)
+opt_theta
+
+#var_theta <- diag(solve(opt_theta$hessian))
+#var_theta
+
+
+#-------------------------------------------------
+#variance <- function(data, param, parametrization) {
+#  if(parametrization == "omega") {
+#    a <- nlm(log_lik_weibull_rep_omega, param, hessian = T, data = y)
+#    weib_var <- a$estimate[1]*factorial(1+1/a$estimate[2])
+#    return(2*weib_var^2/length(data))
+#  }
+#  else if(parametrization == "theta") {
+#    a <- optim(param, fn = log_lik_weibull_rep, NULL, method = "CG", data = y)
+#    weib_var <- a$par[1]*(1+1/a$par[2])
+#    return(2*weib_var^2/length(data))
+#  }
+#}
+
+#min_var_omega <- nlm(variance, c(21, 123), hessian = T, data = y, parametrization = "omega")
+#min_var_omega$minimum
+
+#min_var_theta <- optim(c(2, 10), variance, NULL, method = "BFGS", data = y, parametrization = "theta")
+#min_var_theta$value
+
+#optimHess(b$par, log_lik_weibull_rep_omega, data = y)
+```
 
 
 ### Exercise 2
 
+**The $Wald confidence$ interval with level  $1−\alpha$ is defined as:**
 
-*Solution :*
+$$\hat{\gamma} \pm z_{1 - \alpha/2} j_P (\hat{\gamma})^{−1/2}.$$
 
+**Compute the Wald confidence interval of level 0.95 and plot the results.**
+
+**Solution:**
+
+In practical situations, some components of the parameter vector $\theta$ are more important than others; essentially, in such situations it is of interest for us making inference only on those subgroups of parameters. In the Weibull case, we could treat $\gamma$ as the *parameter of interest* and $\beta$ as the *nuisance* parameter. We may then define the **profile log-likelihood**:
+
+\begin{equation*} l_P(\gamma) = \max_{\beta} l(\gamma, \beta; y) = l(\gamma, \hat{\beta}_{\gamma}; y), \end{equation*}
+
+where $\hat{\beta}_{\gamma}$ is the *constrained* MLE for $\beta$, with $\gamma$ fixed. Some issues deserve a quick consideration:
+
+- the profile log-likelihood is simply the log-likelihood for the bidimensional parameter $\theta$, with the nuisance component $\beta$ replaced by
+\begin{equation*} \hat{\beta}_{\gamma} = \big( \sum_{i=1}^n y_i^{\gamma}/n\big)^{1/\gamma}. \end{equation*}
+
+- $l_P$ is not a *genuine* likelihood. However, it has some nice features  which ease to work with. 
+
+```{r Ex 2.0, message = FALSE, warning = FALSE}
+
+weib.y.mle <- optim(c(1, 1), log_lik_weibull, NULL, hessian = T, method = 'BFGS', 
+                    lower = rep(1e-7, 2), upper = rep(Inf, 2), data = y)
+
+gamma <- seq(0.1, 15, length = 100)
+beta <- seq(100, 200, length = 100)
+parvalues <- expand.grid(gamma, beta)
+
+llikvalues <- apply(parvalues, 1, log_lik_weibull, data = y)
+llikvalues <- matrix(-llikvalues, nrow=length(gamma), ncol = length(beta), byrow = F)
+
+conf.levels <- c(0, 0.5, 0.75, 0.9, 0.95, 0.99)
+
+#contour plot
+contour(gamma, beta, llikvalues - max(llikvalues),
+       levels = -qchisq(conf.levels, 2)/2,
+       xlab = expression(gamma),
+       labels = as.character(conf.levels),
+       ylab = expression(beta))
+title('Weibull profile log-likelihood')
+
+beta.gamma <- sapply(gamma, function(x) mean(y^x)^(1/x))
+lines(gamma, beta.gamma, lty = 'dashed', col = 2)
+points(weib.y.mle$par[1], weib.y.mle$par[2])
+```
+
+In some sense, we *reduced the dimension* of the problem, and we acknowledged that we may work with a one-dimensional likelihood evaluated in the constrained value $\hat{\beta}_{\gamma}$ for the nuisance component. Then, we may now compute some **deviance confidence intervals** with level $1-\alpha$ as:
+
+\begin{equation*} \{\gamma \colon l_P(\gamma) \geq l_P (\hat{\gamma}) - \frac{1}{2} \chi^2_{1;\-\alpha} \} \end{equation*}
+
+where $\chi^2_{1;1-\alpha}$ is the $1-\alpha$-th quantile of a chi-squared distribution with $1$ degree of freedom, the asymptotic distribution for the **profile likelihood-ratio test statistic**:
+
+\begin{equation*} W_P(\gamma) = 2\{l_P(\hat{\gamma})-l_P(\gamma)\}. \end{equation*}
+
+```{r Ex 2.0.1, warning = FALSE, message = FALSE}
+
+log_lik_weibull_profile  <- function(data, gamma){
+  beta.gamma <- mean(data^gamma)^(1/gamma)
+ log_lik_weibull( data, c(gamma, beta.gamma) )
+}
+
+log_lik_weibull_profile_v <- Vectorize(log_lik_weibull_profile, 'gamma'  )
+
+plot(function(x) -log_lik_weibull_profile_v(data = y, x) + weib.y.mle$value, 
+     from = 0.1, to = 15,
+     xlab = expression(gamma),
+     ylab = 'profile relative log likelihood',
+     ylim = c(-8,0))
+
+conf.level <- 0.95
+abline(h = -qchisq(conf.level,1)/2, lty = 'dashed', col = 2)
+
+
+
+lrt.ci1 <- uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + qchisq(conf.level,1)/2,
+                 c(1e-7, weib.y.mle$par[1]))$root
+
+lrt.ci1 <- c(lrt.ci1, uniroot(function(x) -log_lik_weibull_profile_v(y,x) + weib.y.mle$value + qchisq(conf.level,1)/2,
+                              c(weib.y.mle$par[1], 15))$root)
+
+segments(lrt.ci1[1],-qchisq(conf.level,1)/2, lrt.ci1[1],
+        -log_lik_weibull_profile_v(y, lrt.ci1[1]), col="red", lty = 2)
+
+segments(lrt.ci1[2],-qchisq(conf.level,1)/2, lrt.ci1[2],
+         -log_lik_weibull_profile_v(y, lrt.ci1[2]), col="red", lty = 2)
+
+points(lrt.ci1[1], -qchisq(0.95,1)/2, pch = 16, col = 2, cex = 1.5)
+points(lrt.ci1[2], -qchisq(0.95,1)/2, pch = 16, col = 2, cex = 1.5)
+
+segments( lrt.ci1[1], -8.1, 
+          lrt.ci1[2], 
+          -8.1, col="red", lty = 1, lwd = 2)
+
+text(7, -7.5, "95% Deviance CI", col = 2)
+```
+
+**The **Wald confidence interval** with level $1 - \alpha$ is defined as:**
+
+\begin{equation*} \hat{\gamma} \pm z_{1-\alpha/2}j_P(\hat{\gamma})^{-1/2}. \end{equation*}
+
+**Compute the Wald confidence interval of level $0.95$ and plot the result.**
+
+**Solution:**
+
+```{r Ex 2.1, warning = FALSE, message = FALSE}
+
+#  Incorrect variance
+#wald_level3 <- 1.96*sqrt(var(dweibull(y, weib.y.mle$par[1], weib.y.mle$par[2])))
+#wald_level3
+
+# Same as before, but using the actual formula in place of the function
+#wald_level2 <- 1.96*sqrt(weib.y.mle$par[1]^2*(gamma(1+2/weib.y.mle$par[2])-(gamma(1+1/weib.y.mle$par[2])^2)))
+#wald_level2
+
+# The one I choose using the value of var(gamma), that I took from LAB2, ex 4
+wald_level <- 1.96*sqrt(mle.se[1])
+wald_level
+
+
+
+plot(function(x) -log_lik_weibull_profile_v(data=y, x) + weib.y.mle$value, 
+     from = 0.1, to = 15,
+     xlab = expression(gamma),
+     ylab = 'profile relative log likelihood',
+     ylim = c(-8,0))
+
+
+lrt.ci1 <- c(uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(1e-7, weib.y.mle$par[1]))$root,
+             uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(weib.y.mle$par[1], 15))$root)
+
+
+abline(h = -log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value,lty = 'dashed', col=2)
+
+segments(lrt.ci1[1],-log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value, 
+         lrt.ci1[1], -log_lik_weibull_profile_v(y, lrt.ci1[1]), 
+         col="red", lty = 2)
+
+segments(lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]) + weib.y.mle$value, 
+         lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]), 
+         col="red", lty = 2)
+
+points(lrt.ci1[1], -log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value, pch = 16, col = 2, cex = 1.5)
+points(lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]) + weib.y.mle$value, pch = 16, col = 2, cex = 1.5)
+
+segments(lrt.ci1[1], -8.1, 
+         lrt.ci1[2], -8.1,
+         col="red", lty = 1, lwd = 2)
+
+text(7, -7.5, "95% Wald CI", col = 2)
+```
 
 
 ### Exercise 3
 
+**Repeat the steps of the previous exercise —write the profile log-likelihood, plot it and find the deviance confidence intervals— considering this time $\gamma$ as a *nuisance parameter* and $\beta$ as the *parameter of interest*.**
 
-*Solution :*
 
+**Solution:**
+
+We need to find the profile log likelihood:
+
+\begin{equation*} l_P(\beta) = \max_{\gamma} l(\beta, \gamma; y) = l(\beta, \hat{\gamma}_{\beta}; y), \end{equation*}
+
+where this time $\hat{\gamma}_{\beta}$ is the constrained MLE for $\gamma$, with $\beta$ fixed:
+
+\begin{equation*} \hat{\gamma}_{\beta} = \big( \sum_{i=1}^n y_i^{\beta}/n\big)^{1/\beta}. \end{equation*}
+
+\begin{equation*} \frac{n}{\gamma} - n\log(\beta) + \sum_{i=1}^n\log(y_i) - \sum_{i=1}^n \Big(\frac{y_i}{\beta}\Big)^{\gamma}\log\Big(\frac{y_i}{\beta}\Big) = 0 \end{equation*}
+
+\begin{align*} \frac{n}{\gamma} - \sum_{i=1}^n \Big(\frac{y_i}{\beta}\Big)^{\gamma}\log\Big(\frac{y_i}{\beta}\Big) &= n\log(\beta) - \sum_{i=1}^n \log(y_i) \\ \sum_{i=1}^n \Big(\frac{1}{\gamma} - \Big(\frac{y_i}{\beta}\Big)^{\gamma}\log\Big(\frac{y_i}{\beta}\Big)\Big) &= n\log(\beta) - \sum_{i=1}^n \log(y_i) \\
+\end{align}
+
+
+```{r Ex 3.1, message = FALSE, warning = FALSE}
+gamma <- seq(0.1, 15, length = 100)
+beta <- seq(100, 200, length = 100)
+parvalues <- expand.grid(gamma, beta)
+
+
+llikvalues <- apply(parvalues, 1, log_lik_weibull, data = y)
+llikvalues <- matrix(-llikvalues, nrow=length(gamma), ncol = length(beta), byrow = F)
+x <- seq(0,100, length = 1000)
+
+conf.levels <- c(0, 0.5, 0.75, 0.9, 0.95, 0.99)
+
+#contour plot
+contour(gamma, beta,  llikvalues - max(llikvalues),
+       levels = -qchisq(conf.levels, 2)/2,
+       xlab = expression(beta),
+       labels = as.character(conf.levels),
+       ylab = expression(gamma))
+title('Weibull profile log-likelihood')
+
+beta.gamma <- sapply(gamma, function(x) mean(y^x)^(1/x))
+lines(gamma, beta.gamma, lty = 'dashed', col = 2)
+points(weib.y.mle$par[1], weib.y.mle$par[1])
+
+log_lik_weibull_profile  <- function(data, gamma){
+  beta.gamma <- mean(data^gamma)^(1/gamma)
+ log_lik_weibull( data, c(gamma, beta.gamma) )
+}
+
+log_lik_weibull_profile_v <- Vectorize(log_lik_weibull_profile, 'gamma'  )
+
+
+plot(function(x) -log_lik_weibull_profile_v(data = y, x) + weib.y.mle$value, 
+     from = 0.1, to = 15,
+     xlab = expression(gamma),
+     ylab = 'profile relative log likelihood',
+     ylim = c(-8,0))
+
+conf.level <- 0.95
+abline(h = -qchisq(conf.level,1)/2, lty = 'dashed', col = 2)
+
+
+lrt.ci1 <- uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + qchisq(conf.level,1)/2,
+                 c(1e-7, weib.y.mle$par[1]))$root
+
+lrt.ci1 <- c(lrt.ci1, uniroot(function(x) -log_lik_weibull_profile_v(y,x) + weib.y.mle$value + qchisq(conf.level,1)/2,
+                              c(weib.y.mle$par[1], 15))$root)
+
+segments(lrt.ci1[1],-qchisq(conf.level,1)/2, lrt.ci1[1],
+        -log_lik_weibull_profile_v(y, lrt.ci1[1]), col="red", lty = 2)
+
+segments(lrt.ci1[2],-qchisq(conf.level,1)/2, lrt.ci1[2],
+         -log_lik_weibull_profile_v(y, lrt.ci1[2]), col="red", lty = 2)
+
+points(lrt.ci1[1], -qchisq(0.95,1)/2, pch = 16, col = 2, cex = 1.5)
+points(lrt.ci1[2], -qchisq(0.95,1)/2, pch = 16, col = 2, cex = 1.5)
+
+segments( lrt.ci1[1], -8.1, 
+          lrt.ci1[2], 
+          -8.1, col="red", lty = 1, lwd = 2)
+
+text(7, -7.5, "95% Deviance CI", col = 2)
+```
 
 
 ### Exercise 5 
 
-In $sim$ in the code above, you find the MCMC output which allows to approximate the posterior distribution of our parameter of interest with $S$ draws of $\theta$. Please, produce an histogram for these random draws $\theta(1),…,\theta(S)$, compute the empirical quantiles, and overlap the true posterior distribution.
+**In $sim$ in the code above, you find the MCMC output which allows to approximate the posterior distribution of our parameter of interest with $S$ draws of $\theta$. Please, produce an histogram for these random draws $\theta(1),…,\theta(S)$, compute the empirical quantiles, and overlap the true posterior distribution.**
 
-
-*Solution :*
+**Solution:**
 
 ```{r basic = 7, echo=TRUE}
 #true mean
@@ -208,12 +561,8 @@ fit <- stan(file="files/normal.stan",
 #extract Stan output
 sim <- extract(fit)
 
-# QQPlot
-library("car")
-
 quantile(sim$theta)
 boxplot(sim$theta, horizontal = TRUE, col = "lightgray", main = "Theta Box Plot")
-
 ```
 
 from the numerical value of the quantiles it seems the theta distribution is well distribuited around the mean, infact the quantiles are at the same distance from it. Moreover it is immediately clear by looking on the box plot: 
@@ -222,7 +571,6 @@ the various theta values are, more or less, simmetrically spreaded around the me
 ```{r basic = 8, echo=TRUE}
 qqnorm(sim$theta, pch = 1, frame = FALSE, main = "Normal Q-Q Plot for theta")
 qqline(sim$theta, col = "steelblue", lwd = 2)
-
 ```
 
 the Q-Q plot shows us what suppose until know, the theta distribution is distribuited like a normal distribution, even if a there is a tiny variability on the tails. So, we may accept the normality assumption.
@@ -236,23 +584,24 @@ curve(dnorm(x, mu_star, sd_star),
      cex.lab=2, add=T)
 ```
 
+
 ### Exercise 6
 
-Launch the following line of $R$ code:
+**Launch the following line of $R$ code:**
 ```{r basic= 10, echo=TRUE}
 posterior <- as.array(fit)
 ```
 
-Use now the $bayesplot$ package. Read the help and produce for this example, using the object posterior, the following plots:
+**Use now the $bayesplot$ package. Read the help and produce for this example, using the object posterior, the following plots:**
 
-* posterior intervals.
-* posterior areas.
-* marginal posterior distributions for the parameters.
+* **posterior intervals.**
+* **posterior areas.**
+* **marginal posterior distributions for the parameters.**
 
+**Quickly comment.**
 
-Quickly comment.
+**Solution:**
 
-*Solution :*
 ```{r basic =11 , echo=TRUE}
 library(bayesplot)
 posterior <- as.array(fit)
@@ -271,53 +620,10 @@ mcmc_areas(posterior, pars = c("theta"), prob = 0.8) + plot_title
 The bayes plot library provide us a posterior-plot of the our posterior, 
 and it shows us an approximately normal distribution centered in 2.6 for the theta parameter.
 
-```{r basic =12 , echo=TRUE}
-# interesting things
-
-# density plot
-mcmc_hex(posterior)
-
-# autocorrelation plot
-mcmc_acf(posterior)
-```
-
-The acf shows us how the parameter is basically no-autocorrelated because
-the ac curve is quite close to zero in all chains.
-
-```{r basic =13 , echo=TRUE}
-
-# rhat analysis
-rhats <- rhat(fit)
-mcmc_rhat(rhats)+ yaxis_text(hjust = 1)
-```
-
-
-The rhat is quite close to 1, that is good for convergence purposes.
-
-```{r basic =14 , echo=TRUE}
-# neff analysis
-ratios <- neff_ratio(fit)
-mcmc_neff(ratios, size = 3) + yaxis_text(hjust = 1)
-```
-
-
-From the plot analysis we see that the neef of the parameter is not so high.
-
-```{r basic =15 , echo=TRUE}
-# combo plot
-combo_plot <- c("areas", "trace", "hist", "hex")
-color_scheme_set("mix-blue-red")
-mcmc_combo(
-  posterior,
-  pars = c("theta", "lp__"),
-  combo = combo_plot,
-  gg_theme = ggplot2::theme_gray() + legend_none()
-)
-```
 
 ### Exercise 7
 
-Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $yi∼Poisson(\lambda)$. Now, you have to choose the prior $π(λ)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:
+**Suppose you receive $n=15$ phone calls in a day, and you want to build a model to assess their average length. Your likelihood for each call length is $yi∼Poisson(\lambda)$. Now, you have to choose the prior $π(λ)$. Please, tell which of these priors is adequate to describe the problem, and provide a short motivation for each of them:**
 
 1. $π(\lambda)=Beta(4,2);$
 
@@ -325,9 +631,9 @@ Suppose you receive $n=15$ phone calls in a day, and you want to build a model t
 
 3. $π(\lambda)=Gamma(4,2);$
 
-Now, compute your posterior as $\pi(\lambda|y)∝L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analitically.
+**Now, compute your posterior as $\pi(\lambda|y)∝L(\lambda;y)\pi(\lambda)$ for the selected prior. If your first choice was correct, you will be able to compute it analitically.**
 
-*solution :*
+**Solution:**
 
 Remining that a prior distribution is our prior belief on the $\lambda$ paramenter, we may observe the following notes:
 
@@ -347,8 +653,6 @@ $\propto \prod_{i = 1}^{n}(\lambda^{x_i}) \cdot e^{-n \cdot \lambda} \cdot \lamb
 
 Where we have not compute the normalization constant and we ignored constants that do not depend on $\lambda$.
 So, the posterior distribution belongs to a gamma distribution $Gamma(s + \alpha, n \cdot \beta)$ in which $s = x_1 + x_2 + \cdots + x_n$; in the our specific case the posterior distribution belongs to a $Gamma(s + 4, 15 \cdot 2)$.
-
-
 
 ```{r basic= 16 , echo=TRUE}
 #input values
@@ -385,8 +689,9 @@ legend(8.5, 0.7, c("Prior", "Likelihood", "Posterior"),
        c("red", "black", "blue", "grey" ), lty=c(1,2,1),lwd=c(1,1,2), cex=1)
 
 ```
-### Exercise 8
 
+
+### Exercise 8
 
 **Go to this link: [rstan](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started), and follow the instructions to download and install the `rstan` library. Once you did it succesfully, open the file model called `biparametric.stan`, and replace the line:**
 
@@ -434,10 +739,6 @@ mcmc_areas(posterior_biv,
 ```
 
 From the traceplot, we can easily say that chains are converged meaning they run around some values of the parameter space. There is no significant difference between old and new posterior distribution plots so we may say that prior distributions don't provide much information about posterior distributions.
-
-
-
-
 
 
 ### Exercise 9
@@ -489,11 +790,10 @@ prior_norm_v <- Vectorize(prior_norm, "theta")
  curve(prior_norm_v(theta=x, npar=c(2, .5)), lty =4, col="green", add =TRUE, lwd =2)
 #prior 4 
   curve(prior_norm_v(theta=x, npar=c(1, 2)), lty =5, col="violet", add =TRUE, lwd =2)
-  legend(2.6, 1.8, c("Lik.", "Ga(2,4)", "N(1, 0.25)", "N(2,0.25)","N(1, 4)" ),
+  legend(2.6, 1.8, c("Lik.", "Prior 1: Ga(2,4)", "Prior 2: N(1, 0.25)", "Prior 3: N(2,0.25)","Prior 4: N(1, 4)" ),
   lty=c(1,2,3,4,5), col=c("black", "red", "blue", "green", "violet"),lwd=2, cex=0.9)
-
-
 ```
+
 In previous plot, `Prior 1` and `Prior 2` coincided but now they are different because of the change we made. Expected value of likelihood centered around $0.5$ and each prior offered different estimation and variance. `Prior 3` is concentrated around 2 which seems higher than other priors. `Prior 4` shows more spreaded distribution so it is the less informative one among the others. 
 
 ```{r basic= 19,echo=TRUE,  message=FALSE, warning=FALSE}
@@ -533,6 +833,7 @@ curve(logpoissongamma.v(theta=x, list(data=y, par=c(2, 4))), col="red", xlim=c(-
  legend(2.6, 1.3, c( "loglik", "lpost 1", "lpost 2", "lpost 3", "lpost 4" ),
   lty=1, col=c("black", "red", "blue", "green", "violet"),lwd=2, cex=0.9)
 ```
+
 Curves of posterior distributions are quite similar among the each other. They are close to he log-likeligood function. The only curve stands out is the one more in constrast with likelihood. Comparasions of these models will be made by using bayes factor.
 
 ```{r basic= 20, echo=TRUE,  message=FALSE, warning=FALSE}
@@ -550,6 +851,7 @@ postsds <- sqrt(c(fit1$var, fit2$var, fit3$var, fit4$var))
 logmarg <- c(fit1$int, fit2$int, fit3$int, fit4$int)
 cbind(postmode, postsds, logmarg)
 ```
+
 Here we found the posterior mode, log marginal likelihood and posterior standard deviations. Posterior mode of `Prior 1` is bit smaller than others. It is due to influence of the prior distribution concentrated around smaller values compared the likelihood.
 
 ```{r basic= 21, echo=TRUE,  message=FALSE, warning=FALSE}
@@ -564,16 +866,16 @@ for (i in 1:3){
 round_bf <- round(BF_matrix,3)
 round_bf
 ```
+
 `Prior 2` is still favored over other priors. The change that we did to `Prior 1` made negative impact and it perform worse than previous prior choice and still every prior is favored over `Prior 3`.
-
-
 
 
 ### Exercise 10
 
 **Let $y=(1,0,0,1,0,0,0,0,0,1,0,0,1,0)$ collect the results of tossing $n=14$ times an unfair coin, where 1 denotes _heads_ and 0 _tails_, and $p=\text{Prob}(y_i=1)$.**
 
-* **Looking at the `Stan` code for the other models, write a short Stan Beta-Binomial model, where $p$ has a $\text{Beta}(a,b)$ prior with $a=3, b=3$.**
+1. **Looking at the `Stan` code for the other models, write a short Stan Beta-Binomial model, where $p$ has a $\text{Beta}(a,b)$ prior with $a=3, b=3$.**
+
 ```
 The stan file used is:
 data{
@@ -595,10 +897,7 @@ model{
 
 * **extract the posterior distribution with the function `extract()`**
 
-* **produce some plots with the `bayesplot` package and comment.**
-
 ```{r basic= 22, echo=TRUE,  message=FALSE, warning=FALSE}
-library(LearnBayes)
 
 y=c(1,0,0,1,0,0,0,0,0,1,0,0,1,0)
 n <-  length(y)
@@ -612,6 +911,13 @@ data<- list(N=n, y=heads, alpha=alpha, beta=beta)
 fit <- stan(file="files/beta-binomial.stan", data = data, chains = 4, iter=2000,refresh=-1)
 #extract the Stan output
 sim <- extract(fit)
+
+```
+
+* **produce some plots with the `bayesplot` package and comment.**
+
+```{r basic= 23, echo=TRUE,  message=FALSE, warning=FALSE}
+library(LearnBayes)
 
 summary(sim$theta)
 var(sim$theta)
