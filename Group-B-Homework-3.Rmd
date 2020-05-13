@@ -588,8 +588,7 @@ sd_star <- sqrt(1/( (1/tau2)+(n/sigma2)))
 library(rstan)
 #launch Stan model
 data<- list(N=n, y=y, sigma =sqrt(sigma2), mu = mu, tau = sqrt(tau2))
-fit <- stan(file="files/normal.stan",
-            data = data, chains = 4, iter=2000)
+fit <- stan(file="files/normal.stan",data = data, chains = 4, iter=2000)
 
 #extract Stan output
 sim <- extract(fit)
@@ -635,38 +634,48 @@ posterior <- as.array(fit)
 
 **Solution:**
 
+First, we print the dimensions of the posterior object : 
+```{r basic= 10, echo=TRUE}
+dim(posterior)
+dimnames(posterior)
+```
+
 **1. Plot posterior intervals.**
 
-```{r basic=10.1 , echo=TRUE,  message=FALSE, warning=FALSE}
+Central posterior uncertainty intervals can be plotted using the $mcmc_intervals$ from $bayesplot$ package. 
 
+```{r basic=10.1 , echo=TRUE,  message=FALSE, warning=FALSE}
+library(bayesplot)
 mcmc_intervals(posterior, pars = c("theta"))
 
 ```
 
+The point in the above plot is the posterior medians.Also, the default is to show 50% intervals (the thick segments) and 90% intervals (the thinner outer lines). 
 
 **2. Plot posterior areas.**
 
 ```{r basic=10.2 , echo=TRUE,  message=FALSE, warning=FALSE}
 plot_title <- ggtitle("Posterior distributions",
-                      "with mean and 80% intervals")
+                      "with medians and 80% intervals")
 
 mcmc_areas(posterior, 
            pars = "theta", 
-           prob = 0.8,
-           point_est = "mean") + plot_title
-           
-           
+           prob = 0.8, # 80% intervals
+           prob_outer = 0.99, # 99%
+           point_est = "median") + plot_title
 ```
+
+This plot shows the estimated posterior density curve and under the curve is the uncertainty intervals as shaded area. 
 
 *3. marginal posterior distributions for the parameters.*
 
 ```{r basic=10.3 , echo=TRUE,  message=FALSE, warning=FALSE}
-
+#histogram of theta parameter
 mcmc_hist(posterior, pars = c("theta"))
 
 ```
 
-
+Here, $mcmc_hist$ plots the marginal posterior distributions with all Markov Chains combined. 
 
 
 ### Exercise 7
