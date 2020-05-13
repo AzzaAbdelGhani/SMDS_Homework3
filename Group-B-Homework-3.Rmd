@@ -215,9 +215,10 @@ weib.y.mle <- optim(c(1,1),fn=log_lik_weibull_profile,hessian=T,
 weib.y.se<-sqrt(diag(solve(weib.y.mle$hessian)))
 
 conf.level <- 0.95
-# wald ci from the equation
-wald_ci <- weib.y.mle$par[1]+c(-1,1)*qnorm(1-(1-conf.level)/2)*weib.y.se[1]
-wald_ci
+wald_level <- 1.96*sqrt(weib.y.se[1])
+
+lrt.ci1 <- c(uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(1e-7, weib.y.mle$par[1]))$root,
+             uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(weib.y.mle$par[1], 15))$root)
 
 plot(function(x) -log_lik_weibull_profile_v(data=y, x) + weib.y.mle$value, 
      from = 0.1, to = 15,
@@ -225,25 +226,29 @@ plot(function(x) -log_lik_weibull_profile_v(data=y, x) + weib.y.mle$value,
      ylab = 'profile relative log likelihood',
      ylim = c(-8,0))
 
-abline(h=-qchisq(conf.level,1)/2,lty='dashed',col="red")
+
+lrt.ci1 <- c(uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(1e-7, weib.y.mle$par[1]))$root,
+             uniroot(function(x) -log_lik_weibull_profile_v(y, x) + weib.y.mle$value + wald_level, c(weib.y.mle$par[1], 15))$root)
 
 
-segments(wald_ci[1],-log_lik_weibull_profile_v(y, wald_ci[1]) - weib.y.mle$value, 
-         wald_ci[1], -log_lik_weibull_profile_v(y, wald_ci[1]) + weib.y.mle$value, 
+abline(h = -log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value,lty = 'dashed', col=2)
+
+segments(lrt.ci1[1],-log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value, 
+         lrt.ci1[1], -log_lik_weibull_profile_v(y, lrt.ci1[1]), 
          col="red", lty = 2)
 
-segments(wald_ci[2],-log_lik_weibull_profile_v(y,wald_ci[2])-weib.y.mle$value, 
-         wald_ci[2], -log_lik_weibull_profile_v(y, wald_ci[2])+weib.y.mle$value, 
-         col="red", lty=2 )
+segments(lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]) + weib.y.mle$value, 
+         lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]), 
+         col="red", lty = 2)
 
-segments(wald_ci[1], -7, 
-         wald_ci[2], -7,
+points(lrt.ci1[1], -log_lik_weibull_profile_v(y, lrt.ci1[1]) + weib.y.mle$value, pch = 16, col = 2, cex = 1.5)
+points(lrt.ci1[2], -log_lik_weibull_profile_v(y, lrt.ci1[2]) + weib.y.mle$value, pch = 16, col = 2, cex = 1.5)
+
+segments(lrt.ci1[1], -8.1, 
+         lrt.ci1[2], -8.1,
          col="red", lty = 1, lwd = 2)
 
-points(wald_ci[1], -qchisq(0.95,1)/2, pch=16, col=2, cex=1.5)
-points(wald_ci[2], -qchisq(0.95,1)/2, pch=16, col=2, cex=1.5)
-
-text(7, -6.5, "95% Wald CI", col = "red")
+text(7, -7.5, "95% Wald CI", col = 2)
 
 ```
 
