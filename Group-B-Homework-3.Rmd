@@ -577,23 +577,38 @@ posterior <- as.array(fit)
 
 **Solution:**
 
-```{r basic =11 , echo=TRUE}
-library(bayesplot)
-posterior <- as.array(fit)
+**1. Plot posterior intervals.**
 
-# numerical intervals
-mcmc_intervals_data(posterior)[1, ]
+```{r basic=10.1 , echo=TRUE,  message=FALSE, warning=FALSE}
 
-# numerical areas
-mcmc_areas_data(posterior)
+mcmc_intervals(posterior, pars = c("theta"))
 
-# posterior distribution plot
-plot_title <- ggtitle("Marginal Posterior distribution for theta", "with median and 80% interval")
-mcmc_areas(posterior, pars = c("theta"), prob = 0.8) + plot_title
 ```
 
-The bayes plot library provide us a posterior-plot of the our posterior, 
-and it shows us an approximately normal distribution centered in 2.6 for the theta parameter.
+
+**2. Plot posterior areas.**
+
+```{r basic=10.2 , echo=TRUE,  message=FALSE, warning=FALSE}
+plot_title <- ggtitle("Posterior distributions",
+                      "with mean and 80% intervals")
+
+mcmc_areas(posterior, 
+           pars = "theta", 
+           prob = 0.8,
+           point_est = "mean") + plot_title
+           
+           
+```
+
+*3. marginal posterior distributions for the parameters.*
+
+```{r basic=10.3 , echo=TRUE,  message=FALSE, warning=FALSE}
+
+mcmc_hist(posterior, pars = c("theta"))
+
+```
+
+
 
 
 ### Exercise 7
