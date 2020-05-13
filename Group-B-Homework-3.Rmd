@@ -165,13 +165,11 @@ log_lik_weibull_rep <- function(data, param) log_lik_weibull(data, theta(param))
 weib.y.nlm <- nlm(log_lik_weibull_rep,c(0,0),hessian=T,data=y)
 weib.y.nlm
 
-print("Variance of w:")
-diag(solve(weib.y.nlm$hessian))
+cat("Variance of w:\n",diag(solve(weib.y.nlm$hessian)),"\n")
 
 # Variance of the thetahat estimator using optimHess
 opthess_output <- optimHess(theta(weib.y.nlm$estimate), log_lik_weibull, data=y)
-print("Variance of θ:")
-diag(solve(opthess_output))
+cat("Variance of θ:\n",diag(solve(opthess_output)))
 
 ```
 
@@ -230,7 +228,6 @@ plot(function(x) -log_lik_weibull_profile_v(data=y, x) + weib.y.mle$value,
 abline(h=-qchisq(conf.level,1)/2,lty='dashed',col="red")
 
 
-
 segments(wald_ci[1],-log_lik_weibull_profile_v(y, wald_ci[1]) - weib.y.mle$value, 
          wald_ci[1], -log_lik_weibull_profile_v(y, wald_ci[1]) + weib.y.mle$value, 
          col="red", lty = 2)
@@ -250,7 +247,6 @@ text(7, -6.5, "95% Wald CI", col = "red")
 
 ```
 
-Below we plotted them together to see the difference between the two confidence intervals.
 
 ### Exercise 3
 
