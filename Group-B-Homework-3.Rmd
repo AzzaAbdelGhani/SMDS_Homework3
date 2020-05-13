@@ -144,7 +144,7 @@ boot.ci(boot.out = boot_var_results, type = "stud")
 
 ### Exercise 1
 
-**Use nlm to compute the variance for the estimator w^=(log(γ^),log(β^)) and optimHess for the variance of θ^=(γ^,β^).**
+**Use nlm to compute the variance for the estimator** $\hat{w}=(log(\hat{γ}),log(\hat{β}))$ **and optimHess for the variance of** $\hat{θ}=(\hat{γ},\hat{β})$.
 
 ```{r Ex 1.0, message = FALSE, warning = FALSE}
 y <- c(155.9, 200.2, 143.8, 150.1,152.1, 142.2, 147, 146, 146,
@@ -261,7 +261,7 @@ var_theta
 
 ### Exercise 2
 
-**The $Wald confidence$ interval with level  $1−\alpha$ is defined as:**
+**The $Wald \space confidence$ interval with level  $1−\alpha$ is defined as:**
 
 $$\hat{\gamma} \pm z_{1 - \alpha/2} j_P (\hat{\gamma})^{−1/2}.$$
 
